@@ -18,6 +18,9 @@
     "lodash": "^4.0.0",
     "queue-async": "^1.0.7"
   },
+  "// wouldBePeerDependencies": {
+    "fl-server-utils": "*"
+  },
   "devDependencies": {
     "babel": "^5.8.34",
     "babel-core": "^5.8.34",
