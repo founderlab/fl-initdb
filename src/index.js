@@ -3,31 +3,31 @@ import Queue from 'queue-async'
 import {directoryFunctionModules} from 'fl-server-utils'
 
 export default (options, callback) => {
-  const {User, database_url, models_dir, scaffold} = options
+  const {User, databaseUrl, modelsDir, scaffold} = options
   if (!User) return console.error('[fl-initdb] Missing User from options')
-  if (!database_url) return console.error('[fl-initdb] Missing database_url from options')
-  if (!models_dir) return console.error('[fl-initdb] Missing models_dir from options')
+  if (!databaseUrl) return console.error('[fl-initdb] Missing databaseUrl from options')
+  if (!modelsDir) return console.error('[fl-initdb] Missing modelsDir from options')
   if (!scaffold) return console.error('[fl-initdb] Missing scaffold from options')
 
   const queue = new Queue(1)
 
   // Create the database if we're using postgres
-  if (database_url.split(':')[0] === 'postgres') {
+  if (databaseUrl.split(':')[0] === 'postgres') {
 
     queue.defer(callback => {
       const pg = require('pg')
-      const split = database_url.split('/')
-      const database_name = split[split.length-1]
-      const conn_string = database_url.replace(database_name, 'postgres')
+      const split = databaseUrl.split('/')
+      const databaseName = split[split.length-1]
+      const connectionString = databaseUrl.replace(databaseName, 'postgres')
 
-      pg.connect(conn_string, (err, client, done) => {
+      pg.connect(connectionString, (err, client, done) => {
         if (err) return console.error('error connecting to postgres db', err)
 
-        client.query(`SELECT datname FROM pg_catalog.pg_database WHERE lower(datname) = lower('${database_name}')`, (err, result) => {
+        client.query(`SELECT datname FROM pg_catalog.pg_database WHERE lower(datname) = lower('${databaseName}')`, (err, result) => {
           if (err || result && result.rowCount > 0) return callback(err)
 
-          console.log('Creating database', database_name)
-          const query = `CREATE DATABASE "${database_name}"`
+          console.log('Creating database', databaseName)
+          const query = `CREATE DATABASE "${databaseName}"`
           client.query(query, err => {
             done()
             if (err) console.error('error creating database with query:', query, 'error:', err)
@@ -38,7 +38,7 @@ export default (options, callback) => {
     })
 
     // Ensure each model has columns according to its schema
-    const Models = directoryFunctionModules(models_dir)
+    const Models = directoryFunctionModules(modelsDir)
     _.forEach(options.Models || [], (Model, name) => Models[name] = Model)
     _.forEach(Models, Model => queue.defer(callback => Model.db().ensureSchema(callback)))
   }
