@@ -27,7 +27,7 @@ export default (options, callback) => {
           if (err || result && result.rowCount > 0) return callback(err)
 
           console.log('Creating database', database_name)
-          const query = `CREATE DATABASE ${database_name}`
+          const query = `CREATE DATABASE "${database_name}"`
           client.query(query, err => {
             done()
             if (err) console.error('error creating database with query:', query, 'error:', err)
@@ -38,8 +38,9 @@ export default (options, callback) => {
     })
 
     // Ensure each model has columns according to its schema
-    const ModelTypes = directoryFunctionModules(models_dir)
-    _.forEach(ModelTypes, Model => queue.defer(callback => Model.db().ensureSchema(callback)))
+    const Models = directoryFunctionModules(models_dir)
+    _.forEach(options.Models || [], (Model, name) => Models[name] = Model)
+    _.forEach(Models, Model => queue.defer(callback => Model.db().ensureSchema(callback)))
   }
 
   // If we don't have an admin user run the scaffold script for this environment
