@@ -40,7 +40,10 @@ export default (options, callback) => {
     // Ensure each model has columns according to its schema
     const Models = directoryFunctionModules(modelsDir)
     _.forEach(options.Models || [], (Model, name) => Models[name] = Model)
-    _.forEach(Models, Model => queue.defer(callback => Model.db().ensureSchema(callback)))
+    _.forEach(Models, Model => queue.defer(callback => {
+      console.log('Ensuring schema for', Model.name)
+      Model.db().ensureSchema(callback)
+    }))
   }
 
   // If we don't have an admin user run the scaffold script for this environment
