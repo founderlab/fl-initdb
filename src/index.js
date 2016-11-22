@@ -26,7 +26,7 @@ export default (options, callback) => {
         client.query(`SELECT datname FROM pg_catalog.pg_database WHERE lower(datname) = lower('${databaseName}')`, (err, result) => {
           if (err || result && result.rowCount > 0) return callback(err)
 
-          console.log('Creating database', databaseName)
+          console.log('[fl-initdb] Database doesn\'t, exist, creating', databaseName)
           const query = `CREATE DATABASE "${databaseName}"`
           client.query(query, err => {
             done()
@@ -38,12 +38,24 @@ export default (options, callback) => {
     })
 
     // Ensure each model has columns according to its schema
-    const Models = directoryFunctionModules(modelsDir)
-    _.forEach(options.Models || [], (Model, name) => Models[name] = Model)
-    _.forEach(Models, Model => queue.defer(callback => {
-      console.log('Ensuring schema for', Model.name)
-      Model.db().ensureSchema(callback)
-    }))
+    const modelTypes = directoryFunctionModules(modelsDir)
+    _.forEach(options.modelTypes || options.Models || [], (Model, name) => modelTypes[name] = Model)
+
+    // Clear any existing data (!)
+    if (options.__dangerouslyWipeTheEntireDatabase) {
+      console.log('[fl-initdb] Resetting database. All data is going boom, I hope you meant to do this!')
+      _.forEach(modelTypes, Model => queue.defer(callback => {
+        console.log('[fl-initdb] Resetting', Model.name)
+        Model.db().resetSchema(callback)
+      }))
+    }
+    else {
+      _.forEach(modelTypes, Model => queue.defer(callback => {
+        options.verbose && console.log('[fl-initdb] Ensuring schema for', Model.name)
+        Model.db().ensureSchema(callback)
+      }))
+    }
+
   }
 
   // If we don't have an admin user run the scaffold script for this environment
@@ -51,7 +63,7 @@ export default (options, callback) => {
     User.exists({admin: true}, (err, exists) => {
       if (err || exists) return callback(err)
 
-      console.log(`No admin user exists. Running scaffold script for env ${process.env.NODE_ENV}`)
+      console.log(`[fl-initdb] No admin user exists. Running scaffold script for env ${process.env.NODE_ENV}`)
       try {
         scaffold(callback)
       }
