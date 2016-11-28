@@ -10,6 +10,7 @@ export default (options, callback) => {
   if (!scaffold) return console.error('[fl-initdb] Missing scaffold from options')
 
   const queue = new Queue(1)
+  let models
 
   // Create the database if we're using postgres
   if (databaseUrl.split(':')[0] === 'postgres') {
@@ -65,7 +66,7 @@ export default (options, callback) => {
 
       console.log(`[fl-initdb] No admin user exists. Running scaffold script for env ${process.env.NODE_ENV}`)
       try {
-        scaffold(callback)
+        scaffold((err, _models) => callback(err, models = _models))
       }
       catch (err) {
         console.log('Error scaffolding:', err)
@@ -74,5 +75,5 @@ export default (options, callback) => {
     })
   })
 
-  queue.await(callback)
+  queue.await(err => callback(err, models))
 }
