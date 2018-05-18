@@ -1,3 +1,13 @@
+## This package has moved to the [Frameworkstein repository](https://github.com/founderlab/frameworkstein/tree/master/packages/fl-initdb)
+
+
+-------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
 # fl-initdb
 
 ## Auto create and populate a database from a connection string and backbone models
